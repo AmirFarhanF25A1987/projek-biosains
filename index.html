@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus in Agro Product Tech: Tempoyak Fermentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8fafc; }
+        .math-block { font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body class="text-slate-800 p-8 flex flex-col items-center">
+
+    <div class="max-w-4xl w-full bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+        
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl font-bold text-emerald-700 mb-2">Agro Product Tech: Tempoyak Fermentation Model</h1>
+            <p class="text-slate-600">Applying derivatives to monitor the rate of lactic acid production in fermented durian.</p>
+        </header>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-700 mb-2">1. Concentration Function f(x)</h2>
+                <p class="text-sm text-slate-600 mb-2">Estimates the total lactic acid (%) on day t.</p>
+                <div class="math-block bg-slate-800 text-emerald-400 p-3 rounded font-bold">
+                    C(t) = -0.005t³ + 0.08t² + 0.05t + 0.1
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-700 mb-2">2. Derivative Function f'(x)</h2>
+                <p class="text-sm text-slate-600 mb-2">The daily rate of acid production (% per day) at day t.</p>
+                <div class="math-block bg-slate-800 text-emerald-400 p-3 rounded font-bold">
+                    C'(t) = -0.015t² + 0.16t + 0.05
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-8 relative">
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                <p class="text-center text-sm font-semibold text-emerald-600 mb-4 animate-pulse">
+                    Interactive: Click on any data point on the graph to calculate the derivative!
+                </p>
+                <canvas id="fermentationChart" height="100"></canvas>
+            </div>
+        </section>
+
+        <section id="analysis-box" class="hidden bg-emerald-50 border-l-4 border-emerald-500 p-6 rounded shadow-sm transition-all duration-300">
+            <h3 class="text-xl font-bold text-emerald-800 mb-2">Kinetic Analysis at Day <span id="out-day"></span></h3>
+            <p class="mb-2"><strong>Current Lactic Acid:</strong> <span id="out-conc" class="text-lg font-semibold"></span>%</p>
+            <p class="mb-4"><strong>Rate of Change f'(x):</strong> <span id="out-deriv" class="text-lg font-semibold text-blue-700"></span> % per day</p>
+            
+            <div class="bg-white p-4 rounded border border-emerald-200">
+                <h4 class="font-semibold text-slate-700 mb-1">Food Technologist's Layman Explanation:</h4>
+                <p id="out-explain" class="text-slate-600 italic"></p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Generate Data Points (Days 0 to 12)
+        const days = Array.from({length: 13}, (_, i) => i);
+        
+        // Calculate C(t) for each day
+        const concentrationData = days.map(t => {
+            let c = -0.005 * Math.pow(t, 3) + 0.08 * Math.pow(t, 2) + 0.05 * t + 0.1;
+            return parseFloat(c.toFixed(3)); // Round to 3 decimal places
+        });
+
+        // Setup Chart.js
+        const ctx = document.getElementById('fermentationChart').getContext('2d');
+        const fermentationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: days,
+                datasets: [{
+                    label: 'Lactic Acid Concentration (%)',
+                    data: concentrationData,
+                    borderColor: '#047857', // Emerald 700
+                    backgroundColor: 'rgba(4, 120, 87, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#10b981', // Emerald 500
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    fill: true,
+                    tension: 0.4 // Smooth curve
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Fermentation Time (Days)', font: { weight: 'bold' } } },
+                    y: { title: { display: true, text: 'Lactic Acid (%)', font: { weight: 'bold' } }, min: 0 }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Concentration: ${context.parsed.y}% (Click for derivative analysis)`;
+                            }
+                        }
+                    }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const dataIndex = elements[0].index;
+                        const t = days[dataIndex];
+                        analyzePoint(t);
+                    }
+                }
+            }
+        });
+
+        // Function to calculate derivative and display explanation
+        function analyzePoint(t) {
+            // Calculate C(t)
+            const c = (-0.005 * Math.pow(t, 3) + 0.08 * Math.pow(t, 2) + 0.05 * t + 0.1).toFixed(2);
+            
+            // Calculate derivative C'(t)
+            const dc = (-0.015 * Math.pow(t, 2) + 0.16 * t + 0.05).toFixed(3);
+
+            // Layman's explanation logic based on the rate of change
+            let explanation = "";
+            if (t < 2) {
+                explanation = "Lag Phase: The derivative is positive but small. The Lactic Acid Bacteria (LAB) are just waking up and adapting to the durian substrate. Acid production is slow.";
+            } else if (t >= 2 && t <= 6) {
+                explanation = "Exponential Phase: Look at that high derivative! Fermentation is extremely active. The bacteria are rapidly consuming sugars and churning out lactic acid. The tempoyak is quickly developing its signature sour tang.";
+            } else if (t > 6 && dc > 0.05) {
+                explanation = "Deceleration Phase: The derivative is shrinking. Lactic acid is still being produced, but at a slower rate. The high acidity and lowering sugar levels are starting to slow down the bacteria's activity.";
+            } else {
+                explanation = "Stationary/Completion Phase: The derivative is near zero. The rate of change has flatlined, meaning acid production has essentially stopped. Fermentation is complete and the product is ready for packaging!";
+            }
+
+            // Update DOM
+            document.getElementById('out-day').innerText = t;
+            document.getElementById('out-conc').innerText = c;
+            document.getElementById('out-deriv').innerText = dc > 0 ? "+" + dc : dc;
+            document.getElementById('out-explain').innerText = explanation;
+            
+            // Show the box
+            document.getElementById('analysis-box').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
